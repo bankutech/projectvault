@@ -34,7 +34,7 @@ export const useReadiness = (id: string | undefined) =>
 export const useProjectPrompt = (id: string | undefined) =>
   useQuery({
     queryKey: id ? vaultKeys.prompt(id) : ['vault', 'prompt', 'none'],
-    queryFn: () => api<{ prompt: string; projectId: string; selectedRequirements: string[] }>(`/vault/projects/${id}/prompt`),
+    queryFn: () => api<{ prompt: string; phases: Record<string, string>; projectId: string; selectedRequirements: string[] }>(`/vault/projects/${id}/prompt`),
     enabled: Boolean(id),
   })
 

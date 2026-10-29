@@ -411,7 +411,49 @@ test('ProjectVault End-to-End Test Suite', async (t) => {
     assert.equal(notFoundExport.status, 404)
   })
 
-  await t.test('13. Clean up test projects', async () => {
+  await t.test('13. GET /projects returns complete requirements array without data stripping', async () => {
+    const listRes = await request('/projects')
+    assert.equal(listRes.status, 200)
+    assert.ok(Array.isArray(listRes.data.projects))
+    const projA = listRes.data.projects.find((p) => p.id === projectAId)
+    assert.ok(projA, 'Project A found in project list')
+    assert.ok(Array.isArray(projA.requirements), 'requirements field is preserved as an array')
+    assert.ok(projA.requirements.length > 0, 'Project requirements are populated')
+    assert.equal(projA.requirements[0].id, 'REQ-001')
+  })
+
+  await t.test('14. GET /projects/:id/prompt returns master prompt and all 6 structured phase prompts', async () => {
+    const promptRes = await request(`/projects/${projectAId}/prompt`)
+    assert.equal(promptRes.status, 200)
+    assert.ok(typeof promptRes.data.prompt === 'string' && promptRes.data.prompt.length > 100)
+    assert.ok(promptRes.data.phases, 'Phases object is present')
+
+    for (const phaseKey of ['phase1', 'phase2', 'phase3', 'phase4', 'phase5', 'phase6']) {
+      const phaseContent = promptRes.data.phases[phaseKey]
+      assert.ok(typeof phaseContent === 'string', `${phaseKey} is a string`)
+      assert.ok(phaseContent.length > 150, `${phaseKey} contains comprehensive prompt text`)
+      assert.ok(phaseContent.includes('Project Alpha'), `${phaseKey} references project title`)
+    }
+
+    assert.ok(promptRes.data.phases.phase3.includes('REQ-001'), 'Phase 3 core implementation references REQ-001')
+    assert.ok(promptRes.data.phases.phase3.includes('HMAC Webhook Ingestion'), 'Phase 3 references requirement title')
+  })
+
+  await t.test('15. Project duplication creates an isolated clone with unique requirement IDs', async () => {
+    const dupRes = await request(`/projects/${projectAId}/duplicate`, { method: 'POST' })
+    assert.equal(dupRes.status, 201)
+    const cloned = dupRes.data.project
+    assert.notEqual(cloned.id, projectAId)
+    assert.equal(cloned.title, 'Project Alpha (Updated Title) copy')
+    assert.equal(cloned.requirements.length, 2)
+    assert.equal(cloned.requirements[0].id, 'REQ-001')
+    assert.equal(cloned.requirements[1].id, 'REQ-002')
+
+    // Clean up duplicate project
+    await request(`/projects/${cloned.id}`, { method: 'DELETE' })
+  })
+
+  await t.test('16. Clean up test projects', async () => {
     await request(`/projects/${projectAId}`, { method: 'DELETE' })
     await request(`/projects/${projectBId}`, { method: 'DELETE' })
 

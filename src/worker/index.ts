@@ -3,12 +3,6 @@ import { Hono } from 'hono'
 import { authMode, requireUser } from './auth'
 import { requireDb } from './db'
 import type { AppContext, Env } from './env'
-import { activities } from './routes/activities'
-import { companies } from './routes/companies'
-import { contacts } from './routes/contacts'
-import { deals } from './routes/deals'
-import { files } from './routes/files'
-import { tasks } from './routes/tasks'
 import { workspace } from './routes/workspace'
 import { projectvault } from './routes/projectvault'
 
@@ -26,12 +20,6 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 const api = new Hono<AppContext>()
 api.use('*', requireUser, requireDb)
 api.route('/', workspace)
-api.route('/contacts', contacts)
-api.route('/companies', companies)
-api.route('/deals', deals)
-api.route('/tasks', tasks)
-api.route('/activities', activities)
-api.route('/files', files)
 api.route('/vault', projectvault)
 app.route('/api', api)
 

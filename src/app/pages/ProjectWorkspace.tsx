@@ -72,6 +72,9 @@ export function ProjectWorkspace() {
   // Working drafts for unsaved edits
   const [draft, setDraft] = useState<Requirement[]>([])
   const [specDraft, setSpecDraft] = useState<ProjectSpecifications>(blankSpecifications())
+  const [titleDraft, setTitleDraft] = useState('')
+  const [codeDraft, setCodeDraft] = useState('')
+  const [descDraft, setDescDraft] = useState('')
   const [dirty, setDirty] = useState(false)
 
   // Checklist local filters & helpers
@@ -95,8 +98,11 @@ export function ProjectWorkspace() {
 
   useEffect(() => {
     if (p) {
-      setDraft(p.requirements)
-      setSpecDraft(p.specifications)
+      setDraft(p.requirements ?? [])
+      setSpecDraft(p.specifications ?? blankSpecifications())
+      setTitleDraft(p.title ?? '')
+      setCodeDraft(p.projectCode ?? '')
+      setDescDraft(p.description ?? '')
       setDirty(false)
     }
   }, [p?.id, p?.updatedAt])
@@ -134,6 +140,9 @@ export function ProjectWorkspace() {
     if (!p) return
     try {
       await save.mutateAsync({
+        title: titleDraft.trim() || p.title,
+        projectCode: codeDraft.trim(),
+        description: descDraft.trim(),
         requirements: draft,
         specifications: specDraft,
         ...extra,
@@ -354,13 +363,31 @@ export function ProjectWorkspace() {
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field label="Project Name">
-                    <Input value={p.title} onChange={(e) => void save.mutate({ title: e.target.value })} />
+                    <Input
+                      value={titleDraft}
+                      onChange={(e) => {
+                        setTitleDraft(e.target.value)
+                        setDirty(true)
+                      }}
+                    />
                   </Field>
                   <Field label="Project Code / ID">
-                    <Input defaultValue={p.projectCode} onBlur={(e) => e.target.value !== p.projectCode && void save.mutate({ projectCode: e.target.value })} />
+                    <Input
+                      value={codeDraft}
+                      onChange={(e) => {
+                        setCodeDraft(e.target.value)
+                        setDirty(true)
+                      }}
+                    />
                   </Field>
                   <Field label="Short Purpose / Summary">
-                    <Textarea defaultValue={p.description} onBlur={(e) => e.target.value !== p.description && void save.mutate({ description: e.target.value })} />
+                    <Textarea
+                      value={descDraft}
+                      onChange={(e) => {
+                        setDescDraft(e.target.value)
+                        setDirty(true)
+                      }}
+                    />
                   </Field>
                   <Field label="Detailed Purpose">
                     <Textarea value={specDraft.purpose} onChange={(e) => updateSpec('purpose', e.target.value)} placeholder="User problem and desired outcome" />
@@ -877,24 +904,33 @@ export function ProjectWorkspace() {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={() => {
-                        const textToCopy = promptQuery.data?.prompt ?? ''
+                        const activePromptText =
+                          promptTab === 'master'
+                            ? promptQuery.data?.prompt ?? ''
+                            : promptQuery.data?.phases?.[promptTab] ?? ''
                         void navigator.clipboard
-                          .writeText(textToCopy)
-                          .then(() => toast('Prompt copied to clipboard'))
+                          .writeText(activePromptText)
+                          .then(() => toast(`${promptTab === 'master' ? 'Master' : 'Phase'} prompt copied to clipboard`))
                           .catch(() => toast('Clipboard unavailable', 'danger'))
                       }}
                     >
                       <Clipboard className="size-4" />
-                      Copy Master Prompt
+                      {promptTab === 'master' ? 'Copy Master Prompt' : 'Copy Phase Prompt'}
                     </Button>
                     <Button
                       onClick={() => {
-                        const textToDownload = promptQuery.data?.prompt ?? ''
-                        const blob = new Blob([textToDownload], { type: 'text/markdown;charset=utf-8' })
+                        const activePromptText =
+                          promptTab === 'master'
+                            ? promptQuery.data?.prompt ?? ''
+                            : promptQuery.data?.phases?.[promptTab] ?? ''
+                        const blob = new Blob([activePromptText], { type: 'text/markdown;charset=utf-8' })
                         const url = URL.createObjectURL(blob)
                         const a = document.createElement('a')
                         a.href = url
-                        a.download = `ANTIGRAVITY_MASTER_PROMPT_${p.projectCode || p.id.slice(0, 8)}.md`
+                        a.download =
+                          promptTab === 'master'
+                            ? `ANTIGRAVITY_MASTER_PROMPT_${p.projectCode || p.id.slice(0, 8)}.md`
+                            : `ANTIGRAVITY_${promptTab.toUpperCase()}_PROMPT_${p.projectCode || p.id.slice(0, 8)}.md`
                         document.body.appendChild(a)
                         a.click()
                         a.remove()
@@ -945,9 +981,11 @@ export function ProjectWorkspace() {
                   <Textarea
                     className="min-h-[60vh] font-mono text-xs leading-5"
                     value={
-                      promptTab === 'master'
-                        ? promptQuery.data?.prompt ?? 'Loading prompt…'
-                        : `# Phase Prompt — ${promptTab.toUpperCase()}\n\nSupply with ANTIGRAVITY_MASTER_PROMPT.md.\n\nProject: ${p.title} (${p.projectCode})\nSelected Requirements: ${p.requirements.filter((r) => r.selected).length}\n\nProtocol:\n1. Inspect all supplied specifications.\n2. Implement without placeholder code.\n3. Execute automated test checks.\n4. Disclose any unverified features honestly.`
+                      promptQuery.isLoading
+                        ? 'Generating prompt from saved requirements…'
+                        : (promptTab === 'master'
+                            ? promptQuery.data?.prompt
+                            : promptQuery.data?.phases?.[promptTab]) ?? 'Prompt not generated. Ensure project has saved requirements.'
                     }
                     readOnly
                   />

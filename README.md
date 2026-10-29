@@ -7,7 +7,7 @@
 [![Hono](https://img.shields.io/badge/Hono-4.13-E36002.svg?logo=hono&logoColor=white)](https://hono.dev/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers_%26_D1-F38020.svg?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Demo-000000.svg?logo=vercel&logoColor=white)](https://projectvault-pi.vercel.app)
-[![Tests](https://img.shields.io/badge/E2E_Tests-12%2F12_Passed-success.svg)](#7-automated-test-suite)
+[![Tests](https://img.shields.io/badge/E2E_Tests-15%2F15_Passed-success.svg)](#7-automated-test-suite)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **ProjectVault** is a multi-project engineering workspace designed to define, manage, audit, and export build-ready implementation packages for **Google Antigravity**. It maintains strict project isolation, interactive persistent requirements checklists, and generates validated implementation specification ZIP archives with pure-JavaScript in-memory archive packaging and CRC32 verification.
@@ -231,7 +231,7 @@ Run `npm test` in your terminal to execute the end-to-end verification suite:
 npm test
 ```
 
-### Verification Scenarios (12/12 Passing)
+### Verification Scenarios (15/15 Passing)
 1. **Multi-Project Creation**: Creates independent projects with distinct requirements.
 2. **Project Isolation**: Edits Project Alpha and verifies Project Beta remains completely unchanged.
 3. **Prompt Isolation**: Generates separate Antigravity prompts and confirms zero data cross-contamination.
@@ -244,6 +244,9 @@ npm test
 10. **Zero Secret Leakage**: Confirms heuristic scanner rejects API keys, SSH private keys, and secret strings.
 11. **Edge Cases**: Validates empty projects, duplicate names, long Unicode descriptions, and invalid inputs.
 12. **Authorization Boundaries**: Verifies cross-account access denial and project isolation.
+13. **Requirements Array Preservation**: Verifies `GET /projects` returns full requirements lists without data stripping.
+14. **Phased Prompt Generation**: Validates master prompt and all 6 structured phase prompts (`01_ANALYSIS_AND_PLANNING` through `06_FINAL_VERIFICATION`).
+15. **Project Duplication**: Validates deep copying of projects with isolated re-indexed requirements.
 
 ---
 
