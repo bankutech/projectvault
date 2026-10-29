@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development.
+# By default, the application runs with a local development user on localhost.
+APP_ORIGIN=http://localhost:5173
+AUTH_SECRET=
