@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ExportRecord, ProjectRecord, ProjectSpecifications, ReadinessCheck, Requirement } from '../../shared/projectvault'
 import { api } from './api'
+import { downloadLocalProjectExport } from './localVault'
 
 export const vaultKeys = {
   projects: ['vault', 'projects'] as const,
@@ -92,36 +93,46 @@ export async function deleteProject(id: string) {
 }
 
 export async function downloadProjectExport(id: string, mode: 'specification' | 'source' = 'specification') {
-  const response = await fetch(`/api/vault/projects/${id}/export?mode=${mode}`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { accept: 'application/zip' },
-  })
-  if (!response.ok) {
-    let message = `Export failed (${response.status})`
-    try {
-      const body = (await response.json()) as { error?: string; detail?: string; validation?: { warnings?: string[]; failed?: string[] } }
-      message = body.error ?? message
-      if (body.detail) message += `: ${body.detail}`
-      const details = [...(body.validation?.failed ?? []), ...(body.validation?.warnings ?? [])]
-      if (details.length) message += ` — ${details.join('; ')}`
-    } catch {}
-    throw new Error(message)
-  }
-  const blob = await response.blob()
-  const disposition = response.headers.get('content-disposition') ?? ''
-  const name = disposition.match(/filename="([^"]+)"/)?.[1] ?? 'ProjectVault-export.zip'
-  const url = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = url
-  anchor.download = name
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-  return {
-    exportId: response.headers.get('x-projectvault-export-id'),
-    validation: decodeURIComponent(response.headers.get('x-projectvault-validation') ?? '{}'),
+  try {
+    const response = await fetch(`/api/vault/projects/${id}/export?mode=${mode}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { accept: 'application/zip' },
+    })
+
+    const contentType = response.headers.get('content-type') ?? ''
+    if (contentType.includes('text/html') || (!response.ok && response.status === 404)) {
+      return downloadLocalProjectExport(id, mode)
+    }
+
+    if (!response.ok) {
+      let message = `Export failed (${response.status})`
+      try {
+        const body = (await response.json()) as { error?: string; detail?: string; validation?: { warnings?: string[]; failed?: string[] } }
+        message = body.error ?? message
+        if (body.detail) message += `: ${body.detail}`
+        const details = [...(body.validation?.failed ?? []), ...(body.validation?.warnings ?? [])]
+        if (details.length) message += ` — ${details.join('; ')}`
+      } catch {}
+      throw new Error(message)
+    }
+    const blob = await response.blob()
+    const disposition = response.headers.get('content-disposition') ?? ''
+    const name = disposition.match(/filename="([^"]+)"/)?.[1] ?? 'ProjectVault-export.zip'
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = name
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    return {
+      exportId: response.headers.get('x-projectvault-export-id'),
+      validation: decodeURIComponent(response.headers.get('x-projectvault-validation') ?? '{}'),
+    }
+  } catch (err) {
+    return downloadLocalProjectExport(id, mode)
   }
 }
 
