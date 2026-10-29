@@ -6,7 +6,7 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Hono](https://img.shields.io/badge/Hono-4.13-E36002.svg?logo=hono&logoColor=white)](https://hono.dev/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers_%26_D1-F38020.svg?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployment_Ready-000000.svg?logo=vercel&logoColor=white)](https://vercel.com/)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Demo-000000.svg?logo=vercel&logoColor=white)](https://projectvault-pi.vercel.app)
 [![Tests](https://img.shields.io/badge/E2E_Tests-12%2F12_Passed-success.svg)](#7-automated-test-suite)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -250,6 +250,8 @@ npm test
 ## 8. Deployment Guide
 
 ### Deploy to Vercel
+
+- **Live Production URL**: [https://projectvault-pi.vercel.app](https://projectvault-pi.vercel.app)
 
 ProjectVault includes a pre-configured [`vercel.json`](vercel.json) for instantaneous deployment:
 
